@@ -7,7 +7,34 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
-app.use(cors());
+
+// Check if the app is running in the production environment
+const isProduction = process.env.NODE_ENV === 'production';
+
+// Conditionally apply CORS middleware
+if (isProduction) {
+    //TODO: fix allowed origins to include frontend server once it's up
+    const allowedOrigins = ['domain.com'];
+
+    const corsOptions = {
+        origin: (origin: string | undefined, callback: (error: Error | null, allow: boolean) => void) => {
+            if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+                callback(null, true); // Allow the request
+            } else {
+                callback(new Error('Not allowed by CORS'), false); // Deny the request
+            }
+        },
+        methods: 'GET,POST',
+        credentials: true,
+        optionsSuccessStatus: 204,
+    };
+    
+    // Handle preflight requests
+    app.options('*', cors(corsOptions));
+
+    app.use(cors(corsOptions));
+}
+else app.use(cors());
 
 // Middleware to validate route path
 const validateRoute = (req: Request, res: Response, next: NextFunction) => {
