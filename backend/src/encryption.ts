@@ -3,7 +3,6 @@ import * as forge from 'node-forge';
 // Function to encrypt a message using the sender's private key and receiver's public key
 export const encryptMessage = (message: string, receiverPublicKey: string) => {
   try {
-    console.log(receiverPublicKey)
     const publicKey = forge.pki.publicKeyFromPem(receiverPublicKey);
 
     const messageBytes = forge.util.encodeUtf8(message);
