@@ -1,13 +1,13 @@
 import express, { Request, Response } from 'express';
 import { encryptMessage, decryptMessage } from './encryption'; // Import your encryption functions
-import {generateECCKeyPairs } from './utils/keyGen';
+import {generateRSAKeyPairs } from './utils/keyGen';
 
 const router = express.Router();
 
 // Route to generate RSA key pairs and return as JSON
 router.get('/key-gen', (req: Request, res: Response) => {
     try {
-        const keyPairs = generateECCKeyPairs();
+        const keyPairs = generateRSAKeyPairs();
         res.json(keyPairs);
     } catch (error) {
         console.error('Error generating keys:', error);
@@ -19,18 +19,15 @@ router.get('/key-gen', (req: Request, res: Response) => {
 router.post('/encrypt', (req: Request, res: Response) => {
     try {
         const { message, senderPublicKey, receiverPublicKey } = req.body;
-        console.log(message)
 
-        if (!message || !senderPublicKey || !receiverPublicKey) {
+        if (!message || !senderPublicKey || !receiverPublicKey)
             return res.status(400).json({ error: 'Message, Sender Public Key, and Receiver Public Key are required.' });
-        }
 
-        const encryptedMessage = encryptMessage(message, senderPublicKey, receiverPublicKey);
-        res.json({ encryptedMessage });
-        console.log('BBBBBBBBBBBBBBB')
+        const encryptedMessage = encryptMessage(message, receiverPublicKey);
+        res.json({ encryptedMessage, senderPublicKey });
     } catch (error) {
         console.error('Error encrypting message:', error);
-        res.status(500).json({ error: 'Internal server error. 31' });
+        res.status(500).json({ error: 'Internal server error.' });
     }
 });
 
@@ -48,7 +45,7 @@ router.post('/decrypt', (req: Request, res: Response) => {
         res.json({ decryptedMessage });
     } catch (error) {
         console.error('Error decrypting message:', error);
-        res.status(500).json({ error: 'Internal server error. 1' });
+        res.status(500).json({ error: 'Internal server error.' });
     }
 });
 

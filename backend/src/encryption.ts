@@ -1,19 +1,15 @@
-import crypto from 'crypto';
+import * as forge from 'node-forge';
 
 // Function to encrypt a message using the sender's private key and receiver's public key
-export const encryptMessage = (message: string, senderPublicKey: string, receiverPublicKey: string) => {
+export const encryptMessage = (message: string, receiverPublicKey: string) => {
   try {
     console.log(receiverPublicKey)
-    const encryptedMessage = crypto.publicEncrypt(
-      {
-        key: receiverPublicKey,
-      },
-      Buffer.from(message + `\n\rFrom: ${senderPublicKey}`) 
-    );
+    const publicKey = forge.pki.publicKeyFromPem(receiverPublicKey);
 
-    console.log()
+    const messageBytes = forge.util.encodeUtf8(message);
+    const encryptedMessage = publicKey.encrypt(messageBytes, 'RSA-OAEP');
 
-    return encryptedMessage.toString('base64'); // Return the encrypted message as Base64 string
+    return forge.util.encode64(encryptedMessage); // Return the encrypted message as Base64 string
   } catch (error) {
     console.error('Encryption error:', error);
     throw new Error('Encryption failed.');
@@ -23,15 +19,12 @@ export const encryptMessage = (message: string, senderPublicKey: string, receive
 // Function to decrypt an encrypted message using the receiver's private key and sender's public key
 export const decryptMessage = (encryptedMessage: string, receiverPrivateKey: string) => {
   try {
-    const decryptedMessage = crypto.privateDecrypt(
-      {
-        key: receiverPrivateKey.split(String.raw`\n`).join('\n'),
-        padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-      },
-      Buffer.from(encryptedMessage, 'base64')
-    );
+    const privateKey = forge.pki.privateKeyFromPem(receiverPrivateKey);
 
-    return decryptedMessage.toString();
+    const encryptedMessageBytes = forge.util.decode64(encryptedMessage); // Decode Base64 message
+    const decryptedMessageBytes = privateKey.decrypt(encryptedMessageBytes, 'RSA-OAEP');
+
+    return forge.util.decodeUtf8(decryptedMessageBytes);
   } catch (error) {
     console.error('Decryption error:', error);
     throw new Error('Decryption failed.');
